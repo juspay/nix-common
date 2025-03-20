@@ -1,4 +1,4 @@
-{ self, inputs, lib, flake-parts-lib, ... }:
+{ self, lib, flake-parts-lib, ... }:
 let
   inherit (flake-parts-lib)
     mkPerSystemOption;
@@ -64,12 +64,7 @@ in
                   finalImageName = "debian";
                   finalImageTag = "unstable-slim";
                 };
-
-              log-processor = "${lib.getExe inputs.common.inputs.log-processor.defaultPackage.${system}}";
-              # FIXME: This script does more than just invoking log-processor binary with
-              # `cfg.package`: it also sets up a trap to catch SIGTERM to gracefully shutdown.
-              # Ideally we should decouple these two things.
-              package-with-lp = pkgs.writeShellScriptBin "${cfg.package.pname}-with-lp"
+              packageWithGracefulShutdown = pkgs.writeShellScriptBin "${cfg.package.pname}-with-graceful-shutdown"
                 ''
                   _term() { 
                     child=`ps -ef | grep "bin/${cfg.package.pname}$" | awk '{print $2}' | head -n 1`
@@ -86,18 +81,10 @@ in
 
                   trap _term SIGTERM
 
-                  if [[ $ENABLE_LOG_PROCESSOR == true ]]
-                    then
-                      "${lib.getExe cfg.package}" 2>&1 | "${pkgs.coreutils}/bin/tee"   --output-error=warn >( "${log-processor}" --prometheus-port $LP_PROMETHEUS_PORT \
-                      --kafka-brokers $LP_KAFKA_BROKERS \
-                      --kafka-producer-prop $LP_KAFKA_PRODUCER_PROP \
-                      --partition-key $LP_PARTITION_KEY \
-                      --producer-topic $LP_PRODUCER_TOPIC $LP_EXTRA_ARGS) &
-                  else
-                    "${lib.getExe cfg.package}" &
-                  fi
+                  "${lib.getExe cfg.package}" &
                   wait $!
                 '';
+
               extraPath = pkgs.symlinkJoin {
                 name = "euler-docker-extra-paths";
                 paths = cfg.extraPaths;
@@ -108,7 +95,6 @@ in
                 lib.attrNames
                 (map (path: "/" + path))
               ];
-
             in
             pkgs-latest.dockerTools.buildImage {
               fromImage = debianFromDockerHub;
@@ -131,7 +117,7 @@ in
                   unixtools.top
                   bind
                   (runCommand "tmp-dir" { } ''mkdir -p $out/tmp; chmod ugo=rwx $out/tmp'')
-                  package-with-lp
+                  packageWithGracefulShutdown
                   extraPath
                 ] ++ cfg.extraPackages;
                 name = cfg.package.pname;
@@ -141,7 +127,7 @@ in
                 ] ++ extraPaths;
               };
               config = {
-                Cmd = [ "${lib.getExe package-with-lp}" ];
+                Cmd = [ (lib.getExe packageWithGracefulShutdown) ];
                 Env = [ ] ++ cfg.extraEnvs;
               };
             };
