@@ -1,0 +1,7 @@
+ci:
+  default:
+    simple-example:
+      overrideInputs:
+        common: .
+      dir: ./examples/simple
+

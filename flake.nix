@@ -154,13 +154,6 @@
     processComposeModules.default =
       import ./nix/external-services.nix { inherit inputs; };
     environments.externalServices = import ./nix/external-services-envs.nix;
-
-    om.ci.default = {
-      simple-example = {
-        overrideInputs = { common = ./.; };
-        dir = "./examples/simple";
-      };
-    };
   };
 
 }
