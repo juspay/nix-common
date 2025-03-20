@@ -65,10 +65,6 @@ in
                   finalImageTag = "unstable-slim";
                 };
 
-              log-processor = "${lib.getExe inputs.common.inputs.log-processor.defaultPackage.${system}}";
-              # FIXME: This script does more than just invoking log-processor binary with
-              # `cfg.package`: it also sets up a trap to catch SIGTERM to gracefully shutdown.
-              # Ideally we should decouple these two things.
               package-with-lp = pkgs.writeShellScriptBin "${cfg.package.pname}-with-lp"
                 ''
                   _term() { 
@@ -86,16 +82,6 @@ in
 
                   trap _term SIGTERM
 
-                  if [[ $ENABLE_LOG_PROCESSOR == true ]]
-                    then
-                      "${lib.getExe cfg.package}" 2>&1 | "${pkgs.coreutils}/bin/tee"   --output-error=warn >( "${log-processor}" --prometheus-port $LP_PROMETHEUS_PORT \
-                      --kafka-brokers $LP_KAFKA_BROKERS \
-                      --kafka-producer-prop $LP_KAFKA_PRODUCER_PROP \
-                      --partition-key $LP_PARTITION_KEY \
-                      --producer-topic $LP_PRODUCER_TOPIC $LP_EXTRA_ARGS) &
-                  else
-                    "${lib.getExe cfg.package}" &
-                  fi
                   wait $!
                 '';
               extraPath = pkgs.symlinkJoin {
