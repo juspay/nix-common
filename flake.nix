@@ -2,9 +2,7 @@
   inputs = {
     # `nixpkgs`, `haskell-flake` and `flake-parts` will be shared between all the euler repos.
     nixpkgs.url = "github:nixos/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c";
-    # This will be used for fetching latest utils like cachix
-    # and other packages added to the docker image.
-    # (Cachix from nixpkgs above expects a different config schema)
+    # Bleeding edge package set
     nixpkgs-latest.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     haskell-flake.url = "github:srid/haskell-flake";
     flake-parts.url = "github:hercules-ci/flake-parts";

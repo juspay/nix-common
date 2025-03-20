@@ -3,7 +3,6 @@
   flake = {
     om.health.default = {
       rosetta.required = true;
-      caches.required = [ "https://euler.cachix.org" ];
       # TODO: mk required = true; post the end of euler-tools 
       direnv.required = false;
       system = {
