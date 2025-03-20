@@ -33,13 +33,6 @@
           in
           ''
             ${if pkgs-latest.stdenv.isDarwin then "ulimit -s 65000" else ""}
-            echo
-            echo "⬆️⬆️ Pushing to cachix in the background, check cachix.log for more info. ⬆️⬆️"
-
-            ${lib.getExe pkgs-latest.bg_cachix_push} > cachix.log 2>&1 3>&1 & disown
-
-            echo
-            echo
             if [ -f "justfile" ]; then
               echo "🍎🍎 Run 'just <recipe>' to get started"
               just
